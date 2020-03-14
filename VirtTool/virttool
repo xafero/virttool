@@ -1,0 +1,33 @@
+#!/usr/bin/python
+import fire
+import os
+import xmltodict
+
+
+class VirtManager(object):
+    """A tool to handle GNOME Boxes and other libvirt software."""
+
+    def list(self):
+        homeDir = os.environ['HOME']
+        virtDir = os.path.join(homeDir, ".config", "libvirt")
+        qemuDir = os.path.join(virtDir, "qemu")
+        for entry in os.listdir(qemuDir):
+            if entry.endswith('.xml'):
+                with open(os.path.join(qemuDir,  entry), 'r') as handle:
+                    doc = xmltodict.parse(handle.read())
+                    domain = doc['domain']
+                    print ' * ' + domain["title"] + \
+                        ' ('+domain["name"]+') ['+domain["uuid"]+']'
+                    devices = domain["devices"]
+                    disks = devices["disk"]
+                    for disk in disks:
+                        src = disk["source"]
+                        if src.has_key('@startupPolicy'):
+                            policy = src['@startupPolicy']
+                            if policy == 'optional':
+                                continue
+                        print '    * ' + src["@file"]
+
+
+if __name__ == '__main__':
+    fire.Fire(VirtManager)
