@@ -18,6 +18,11 @@ class VirtManager(object):
                     domain = doc['domain']
                     print ' * ' + domain["title"] + \
                         ' ('+domain["name"]+') ['+domain["uuid"]+']'
+                    osinfo = domain["os"]
+                    if osinfo.has_key('loader'):
+                        print '    * ' + osinfo["loader"]["#text"]
+                    if osinfo.has_key('nvram'):
+                        print '    * ' + osinfo["nvram"]
                     devices = domain["devices"]
                     disks = devices["disk"]
                     for disk in disks:
