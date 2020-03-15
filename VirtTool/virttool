@@ -2,6 +2,7 @@
 import fire
 import os
 import xmltodict
+import subprocess
 
 
 class VM(object):
@@ -59,11 +60,16 @@ class VirtManager(object):
         if not os.path.exists(to):
             os.mkdir(to)
         qemuDir = self.__getQemuDir()
+        pzip = '/usr/lib/p7zip/7za'
         for entry in os.listdir(qemuDir):
             if entry.endswith('.xml'):
                 vm = self.__find(qemuDir, entry)
                 dest = os.path.join(to, vm.title)
                 print ' * ' + dest
+                pc = subprocess.Popen(
+                    [pzip, "a", dest, vm.files[0]], stdout=subprocess.PIPE)
+                output = pc.communicate()[0]
+                print output
 
 
 if __name__ == '__main__':
