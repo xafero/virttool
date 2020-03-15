@@ -4,8 +4,37 @@ import os
 import xmltodict
 
 
+class VM(object):
+    def __init__(self, title, name, uuid, files):
+        self.title = title
+        self.name = name
+        self.uuid = uuid
+        self.files = files
+
+
 class VirtManager(object):
     """A tool to handle GNOME Boxes and other libvirt software."""
+
+    def __find(self, qemuDir, entry):
+        with open(os.path.join(qemuDir,  entry), 'r') as handle:
+            doc = xmltodict.parse(handle.read())
+            domain = doc['domain']
+            files = list()
+            osinfo = domain["os"]
+            if osinfo.has_key('loader'):
+                files.append(osinfo["loader"]["#text"])
+            if osinfo.has_key('nvram'):
+                files.append(osinfo["nvram"])
+            devices = domain["devices"]
+            disks = devices["disk"]
+            for disk in disks:
+                src = disk["source"]
+                if src.has_key('@startupPolicy'):
+                    policy = src['@startupPolicy']
+                    if policy == 'optional':
+                        continue
+                files.append(src["@file"])
+            return VM(domain["title"], domain["name"], domain["uuid"], files)
 
     def list(self):
         homeDir = os.environ['HOME']
@@ -13,25 +42,15 @@ class VirtManager(object):
         qemuDir = os.path.join(virtDir, "qemu")
         for entry in os.listdir(qemuDir):
             if entry.endswith('.xml'):
-                with open(os.path.join(qemuDir,  entry), 'r') as handle:
-                    doc = xmltodict.parse(handle.read())
-                    domain = doc['domain']
-                    print ' * ' + domain["title"] + \
-                        ' ('+domain["name"]+') ['+domain["uuid"]+']'
-                    osinfo = domain["os"]
-                    if osinfo.has_key('loader'):
-                        print '    * ' + osinfo["loader"]["#text"]
-                    if osinfo.has_key('nvram'):
-                        print '    * ' + osinfo["nvram"]
-                    devices = domain["devices"]
-                    disks = devices["disk"]
-                    for disk in disks:
-                        src = disk["source"]
-                        if src.has_key('@startupPolicy'):
-                            policy = src['@startupPolicy']
-                            if policy == 'optional':
-                                continue
-                        print '    * ' + src["@file"]
+                vm = self.__find(qemuDir, entry)
+                print ' * ' + vm.title + ' (' + vm.name + ') [' + vm.uuid + ']'
+                for file in vm.files:
+                    print '    * ' + file
+
+    def backup(self, to):
+        if not os.path.exists(to):
+            os.mkdir(to)
+        print to
 
 
 if __name__ == '__main__':
