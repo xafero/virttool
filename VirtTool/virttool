@@ -37,6 +37,7 @@ class VirtManager(object):
             return VM(domain["title"], domain["name"], domain["uuid"], files)
 
     def list(self):
+        """Finding all VMs in your home directory"""
         homeDir = os.environ['HOME']
         virtDir = os.path.join(homeDir, ".config", "libvirt")
         qemuDir = os.path.join(virtDir, "qemu")
@@ -48,6 +49,7 @@ class VirtManager(object):
                     print '    * ' + file
 
     def backup(self, to):
+        """Saving all VMs from your home directory"""
         if not os.path.exists(to):
             os.mkdir(to)
         print to
