@@ -16,10 +16,12 @@ class VirtManager(object):
     """A tool to handle GNOME Boxes and other libvirt software."""
 
     def __find(self, qemuDir, entry):
-        with open(os.path.join(qemuDir,  entry), 'r') as handle:
+        xmlFile = os.path.join(qemuDir, entry)
+        with open(xmlFile, 'r') as handle:
             doc = xmltodict.parse(handle.read())
-            domain = doc['domain']
             files = list()
+            domain = doc['domain']
+            files.append(xmlFile)
             osinfo = domain["os"]
             if osinfo.has_key('loader'):
                 files.append(osinfo["loader"]["#text"])
@@ -36,11 +38,15 @@ class VirtManager(object):
                 files.append(src["@file"])
             return VM(domain["title"], domain["name"], domain["uuid"], files)
 
-    def list(self):
-        """Finding all VMs in your home directory"""
+    def __getQemuDir(self):
         homeDir = os.environ['HOME']
         virtDir = os.path.join(homeDir, ".config", "libvirt")
         qemuDir = os.path.join(virtDir, "qemu")
+        return qemuDir
+
+    def list(self):
+        """Finding all VMs in your home directory"""
+        qemuDir = self.__getQemuDir()
         for entry in os.listdir(qemuDir):
             if entry.endswith('.xml'):
                 vm = self.__find(qemuDir, entry)
@@ -52,7 +58,12 @@ class VirtManager(object):
         """Saving all VMs from your home directory"""
         if not os.path.exists(to):
             os.mkdir(to)
-        print to
+        qemuDir = self.__getQemuDir()
+        for entry in os.listdir(qemuDir):
+            if entry.endswith('.xml'):
+                vm = self.__find(qemuDir, entry)
+                dest = os.path.join(to, vm.title)
+                print ' * ' + dest
 
 
 if __name__ == '__main__':
