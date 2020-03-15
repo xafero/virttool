@@ -65,9 +65,13 @@ class VirtManager(object):
             if entry.endswith('.xml'):
                 vm = self.__find(qemuDir, entry)
                 dest = os.path.join(to, vm.title)
-                print ' * ' + dest
-                pc = subprocess.Popen(
-                    [pzip, "a", dest, vm.files[0]], stdout=subprocess.PIPE)
+                print ' --> ' + dest
+                args = list()
+                args.append(pzip)
+                args.append("a")
+                args.append(dest)
+                args.extend(vm.files)
+                pc = subprocess.Popen(args, stdout=subprocess.PIPE)
                 output = pc.communicate()[0]
                 print output
 
